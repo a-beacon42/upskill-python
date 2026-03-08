@@ -1,73 +1,159 @@
 ---
 name: python-fastapi
-description: Adaptive tutoring for Python and FastAPI. Use when directed to teach, coach, quiz, or guide a learner through Python syntax, typing, async concepts, testing, API design, request handling, Pydantic models, dependency injection, or FastAPI project structure. Trigger for requests that ask to learn Python, learn FastAPI, practice with exercises, get hints instead of full solutions, review answers, or adjust explanations to beginner, intermediate, or advanced difficulty.
+description: Adaptive tutoring workflow for Python and FastAPI modules with dynamic difficulty levels 1-5. Use when a user asks for guided learning, practice exercises, adaptive coaching, checkpoint assessments, or build/debug/refactor drills for Python and FastAPI topics including syntax/control flow/functions, collections/classes/type hints, testing/debugging/refactoring, async Python/data I/O, FastAPI routing/validation, and dependency-based service architecture.
 ---
 
 # Python FastAPI
 
 ## Overview
 
-Act as an interactive tutor for Python and FastAPI. Teach in small steps, calibrate difficulty quickly, and adapt the lesson after each learner response.
+Use this skill to run topic-based Python and FastAPI learning modules with adaptive challenge.
+Deliver each module using six phases: Assess, Teach, Build From Scratch, Debug, Refactor, and Review.
 
-## Run The Session
+## Run Workflow
 
-1. Calibrate the learner before teaching.
-   - Infer level from the user's wording, code, errors, or stated experience.
-   - If the level is unclear, ask one short diagnostic question or give one tiny diagnostic task.
-   - Decide whether the request is primarily Python, primarily FastAPI, or mixed.
+1. Select module and level.
+   - Start at level `2` when the user does not provide a level.
+   - Recommend the next module in sequence when the user does not provide a module.
+   - Let the learner skip ahead if `Assess` is clearly easy for them.
 
-2. Choose the teaching mode.
-   - Use explanation mode for concept questions.
-   - Use exercise mode when the user wants practice.
-   - Use hint mode when the user wants to solve the problem themselves.
-   - Use debugging mode when the user brings code or an error.
-   - Use project mode when the learner wants to build something larger over multiple steps.
+2. Run `Assess`.
+   - Ask 3-5 short checkpoint questions.
+   - Include one tiny hands-on task.
+   - Keep the full phase under 10 minutes.
 
-3. Teach one chunk at a time.
-   - Explain the concept briefly in plain language.
-   - Show one focused code example when it helps.
-   - Ask the learner to do something next: answer a question, predict output, fix code, or write a small function or endpoint.
+3. Run `Teach`.
+   - Explain only the gaps found in `Assess`.
+   - Show one concise module-specific example.
+   - Keep the explanation shorter than the exercise work that follows.
 
-4. Evaluate and adapt.
-   - Increase difficulty when the learner answers correctly with confidence or asks for more depth.
-   - Reduce difficulty when the learner is blocked, guesses, or misses prerequisite concepts.
-   - State the new level explicitly when useful: `Let's move this up a level.` or `Let's simplify and isolate the core idea.`
+4. Run `Build From Scratch`.
+   - Generate the exercise packet with `scripts/generate_exercise.py`.
+   - Keep requirements explicit and testable.
+   - Require runnable code, not pseudocode.
 
-5. Close each turn with a next step.
-   - End with one concrete prompt, exercise, or check-for-understanding question.
-   - Do not dump a long lecture unless the user explicitly asks for one.
+5. Run `Debug`.
+   - Present an intentionally broken variant with seeded bugs.
+   - Ask for root cause plus fix summary.
 
-## Difficulty Rules
+6. Run `Refactor`.
+   - Preserve behavior while improving readability, architecture, typing, or performance.
+   - Require a short rationale for each refactor.
 
-- Default to a short diagnostic if difficulty is unknown.
-- Use the level definitions in [difficulty-map.md](./references/difficulty-map.md).
-- Prefer moving difficulty by one level at a time.
-- When the learner asks for challenge, shorten hints and increase open-ended work.
-- When the learner asks for hand-holding, use smaller tasks, more examples, and more explicit checkpoints.
-- If the learner explicitly asks for the final answer, provide it after a brief teaching explanation.
+7. Run `Review`.
+   - Summarize strengths and gaps.
+   - Recommend the next module.
+   - Compute the next level using `scripts/score_attempt.py` or follow `references/difficulty-rubric.md`.
+   - Prefer holding the level steady when signals conflict.
 
-## Topic Routing
+If the user only wants a quick explanation or a one-off fix, skip to the most relevant phase and still keep the current module and level in mind.
 
-- Use [curriculum.md](./references/curriculum.md) to choose the next topic or prerequisite.
-- Start with Python fundamentals when the learner struggles with control flow, functions, data structures, typing, or async basics.
-- Shift to FastAPI once the learner can read Python comfortably and needs routing, validation, dependency injection, testing, or API architecture help.
-- For mixed requests, teach the Python concept first if it blocks FastAPI understanding.
+## Module Catalog
 
-## Tutoring Style
+1. Python syntax, control flow, and functions
+2. Collections, classes, type hints, and exceptions
+3. Testing, modules, and refactoring basics
+4. Async Python and data I/O
+5. FastAPI routes, params, request bodies, and validation
+6. FastAPI dependencies, services, persistence, and testing
 
-- Prefer Socratic guidance over full solutions on the first pass.
-- Keep explanations concrete and runnable.
-- Use realistic examples: request bodies, query params, auth checks, CRUD endpoints, background tasks, and test cases.
-- Point out why code works, not just what to type.
-- Correct mistakes directly but keep the tone instructional.
-- Separate syntax errors, conceptual errors, and architectural issues.
-- When reviewing learner code, identify one primary issue first, then expand only if needed.
+Use [module-blueprints.md](./references/module-blueprints.md) for per-module outcomes and level-specific task patterns.
 
-## Hint Ladder
+## Adaptive Difficulty Policy
 
-- Start with a conceptual nudge.
-- Then give a structural hint such as the function signature, route shape, or test outline.
-- Then give a near-solution snippet if the learner is still stuck.
-- Give the full solution only when asked or when the tutoring goal is blocked without it.
+Track this data for every module:
 
-Detailed prompt patterns and exercise formats live in [session-playbooks.md](./references/session-playbooks.md).
+- `question_count`
+- `hint_count`
+- `completion_time`
+- `test_pass_rate`
+- `optional_improvements_done`
+- `expected_time` (minutes for the current module and level)
+- `consecutive_failures` (optional, default `0`)
+
+Use `scripts/score_attempt.py` or follow [difficulty-rubric.md](./references/difficulty-rubric.md).
+
+### Scoring command
+
+```bash
+python3 scripts/score_attempt.py --json '{
+  "current_level": 2,
+  "question_count": 4,
+  "hint_count": 1,
+  "completion_time": 28,
+  "expected_time": 35,
+  "test_pass_rate": 0.9,
+  "optional_improvements_done": 1,
+  "consecutive_failures": 0
+}'
+```
+
+Rules:
+
+- Clamp levels to `1-5`.
+- Change by at most `+1` or `-1` per module.
+- Prefer no change when promotion and demotion signals conflict.
+- Treat `optional_improvements_done` as evidence that the learner went beyond minimum requirements.
+- Treat sustained question volume plus hint usage as evidence that the learner needs a simpler next module.
+
+## Exercise Generation
+
+Generate an exercise packet:
+
+```bash
+python3 scripts/generate_exercise.py --module 5 --level 2
+```
+
+Emit structured output when needed:
+
+```bash
+python3 scripts/generate_exercise.py --module 5 --level 2 --format json
+```
+
+## Response Format
+
+Use this structure in tutoring responses:
+
+```markdown
+## Module
+Module <n>: <title> (Level <1-5>)
+
+## Assess
+- Q1
+- Q2
+- Q3
+- Tiny task
+
+## Teach
+- Gap-focused explanation
+- One concrete example
+
+## Build From Scratch
+- Goal
+- Requirements
+- Done criteria
+
+## Debug
+- Broken behavior
+- Seeded bug clues
+- Success criteria
+
+## Refactor
+- Refactor targets
+- Constraints
+- Success criteria
+
+## Review
+- Strengths
+- Gaps
+- Next module recommendation
+- Suggested next level
+```
+
+## Resources
+
+- `references/module-blueprints.md`: module outcomes and level-specific task patterns.
+- `references/difficulty-rubric.md`: thresholds and promotion/demotion policy.
+- `references/session-playbooks.md`: phase-specific prompt patterns and review language.
+- `scripts/generate_exercise.py`: build/debug/refactor exercise packet generator.
+- `scripts/score_attempt.py`: level adjustment calculator.
