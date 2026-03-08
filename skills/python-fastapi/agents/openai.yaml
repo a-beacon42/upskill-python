@@ -1,4 +1,4 @@
 interface:
   display_name: "Python & FastAPI Tutor"
   short_description: "Adaptive Python and FastAPI tutoring"
-  default_prompt: "Use $python-fastapi to tutor me in Python or FastAPI with adaptive difficulty."
+  default_prompt: "Use $python-fastapi to run an adaptive Python or FastAPI learning module with build, debug, and refactor exercises."
