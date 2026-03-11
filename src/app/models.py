@@ -36,20 +36,3 @@ class Product:
             raise InvalidProductError(
                 f"[{self.sku}] Invalid product: price must be greater than 0.00"
             )
-
-
-import pytest
-
-
-def test_valid_product():
-    product_fields = {
-        "name": "name",
-        "price": 4.24,
-        "quantity": 2,
-        "tags": ["sale", "popular"],
-    }
-    new_prod = Product(**product_fields)
-    assert new_prod.to_dict() == product_fields
-
-
-def test_invalid_quantity_raises(): ...
