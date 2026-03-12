@@ -1,4 +1,4 @@
-from models import Product, InvalidProductError
+from src.app.models import Product, InvalidProductError
 import uuid
 
 
